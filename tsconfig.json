@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        "allowJs": true,
+        "strict": true,
+        "noEmit": true,
+        "module": "ES6",
+        "moduleResolution": "node16",
+        "resolveJsonModule": true,
+        "isolatedModules": false,        
+        "esModuleInterop": true
+    },
+    "exclude": ["node_modules"]
+}

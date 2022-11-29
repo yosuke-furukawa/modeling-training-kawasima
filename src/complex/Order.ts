@@ -4,7 +4,9 @@ import { OrderConstraint, Address, ViolationError, Order as IOrder } from "../sh
 export const OrderStatus = {
     IN_PROGRESS: "IN_PROGRESS",
     DELIVERING: "DELIVERING",
-    CLOSED: "CLOSED"
+    CLOSED: "CLOSED",
+    LOTTERY: "LOTTERY",
+    ELECTION: "ELECTION",
 };
 
 type OrderStatus = typeof OrderStatus[keyof typeof OrderStatus];
@@ -19,18 +21,30 @@ export class Order implements IOrder {
     readonly constraints: OrderConstraint[];
     deliveryAddress?: Address;
     deliveryDate?: Date;
+    isLottery?: boolean;
 
-    constructor(orderId: string, constraints: OrderConstraint[]) {
+    constructor(orderId: string, constraints: OrderConstraint[], isLottery?: boolean) {
         this.orderId = orderId;
         this.constraints = constraints;
         this.status = OrderStatus.IN_PROGRESS;
+        this.isLottery = isLottery ?? false;
+    }
+
+    draw(win: boolean) {
+        if (!this.isLottery) {
+            throw new Error("This order is not lottery");
+        }
+        this.status = win ? OrderStatus.ELECTION : OrderStatus.CLOSED;
     }
 
     // 配送手配
     // 「国内配送のみ」「土日配送不可」の注文であれば、それをチェックする。
     deliver(deliveryAddress: Address, deliveryDate: Date): void {
+        if (this.isLottery && this.status !== OrderStatus.ELECTION) {
+            throw new Error(`Order status is not election`);
+        }
         if (this.status !== OrderStatus.IN_PROGRESS) {
-            throw new Error(`Order status is not in progress`);
+            throw new Error(`Order status is not in progress and ELECTION`);
         }
 
         this.deliveryAddress = deliveryAddress;
@@ -51,9 +65,11 @@ export class Order implements IOrder {
     // 配送業者に受け渡したら注文のステータスをCLOSEDにする
     close() {
         if (this.status !== OrderStatus.DELIVERING) {
-            throw new Error(`Order status is not delivering`);
+            throw new Error(`Order status is not delivering or lottery or selection`);
         }
         this.status = OrderStatus.CLOSED;
     }
+
+    // 
 
 }

@@ -2,7 +2,9 @@ import {
     ClosedOrder,
     DeliveringOrder,
     InProgressOrder,
-    OrderConstraint
+    OrderConstraint,
+    LotteryOrder,
+    LotteryResult
 } from '../src/simple/Order';
 
 test('successfully', () => {
@@ -33,4 +35,34 @@ test('constraint violation', () => {
             streetAddress: "a"
         }, new Date(2022, 10, 1));
     }).toThrowError(/shipping only for Japan/)
+});
+
+test('lottery order', () => {
+    const order = new LotteryOrder("123", [OrderConstraint.SHIPPING_JAPAN_ONLY]);
+    expect(order).toBeInstanceOf(LotteryOrder);
+
+    expect(() => {
+        order.draw(LotteryResult.WIN);
+        order.deliver({
+            country: "JP",
+            postalCode: "123",
+            region: "TOKYO",
+            streetAddress: "a"
+        }, new Date(2022, 10, 1));
+    });
+});
+
+test('lottery order if lose', () => {
+    const order = new LotteryOrder("123", [OrderConstraint.SHIPPING_JAPAN_ONLY]);
+    expect(order).toBeInstanceOf(LotteryOrder);
+
+    expect(() => {
+        order.draw(LotteryResult.LOSE);
+        order.deliver({
+            country: "JP",
+            postalCode: "123",
+            region: "TOKYO",
+            streetAddress: "a"
+        }, new Date(2022, 10, 1));
+    }).toThrowError(/You can't deliver this order/);
 });
